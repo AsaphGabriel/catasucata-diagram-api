@@ -1,0 +1,291 @@
+# 🛠️ API REST - E-Commerce Cata Sucata
+
+API REST para o sistema de e-commerce **Cata Sucata**, construída em **Java + Spring Boot**, seguindo os modelos e nomes utilizados nos diagramas do projeto:
+
+- `Cliente`
+- `Endereco`
+- `Item`
+- `Pedido`
+- `ItemPedido`
+
+A API permite cadastrar clientes, endereços, itens (produtos) e realizar pedidos com itens associados.
+
+---
+
+## 🚀 Tecnologias utilizadas
+
+- Java 17+
+- Spring Boot (Web, Data JPA)
+- MySQL (ou outro banco relacional configurado em `application.properties`)
+- Maven
+
+---
+
+## 📁 Estrutura do projeto
+
+Pacote principal:
+
+`com.example.catasucata`
+
+Principais pacotes:
+
+- `model` → Entidades JPA (`Cliente`, `Endereco`, `Item`, `Pedido`, `ItemPedido`, `ItemPedidoId`)
+- `repository` → Interfaces que estendem `JpaRepository`
+- `service` → Regras de negócio (ex: `PedidoService`)
+- `controller` → Endpoints REST (`ClienteController`, `EnderecoController`, `ItemController`, `PedidoController`)
+
+Classe principal (ponto de entrada da aplicação):
+
+```java
+com.example.catasucata.CatasucataApplication
+```
+
+---
+
+## 🗄️ Configuração do banco de dados
+
+A configuração do banco está no arquivo:
+
+```text
+src/main/resources/application.properties
+```
+
+Se você estiver usando MySQL, o arquivo costuma ter algo semelhante a:
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/catasucata?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+spring.datasource.username=SEU_USUARIO
+spring.datasource.password=SUA_SENHA
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+```
+
+> ✅ **Passos:**
+> 1. Crie um banco de dados no MySQL, por exemplo: `catasucata`.
+> 2. Ajuste `username` e `password` no `application.properties`.
+> 3. Garanta que o MySQL esteja rodando.
+
+---
+
+## ▶️ Como executar o projeto
+
+### 1. Usando IntelliJ IDEA
+
+1. Abra o IntelliJ IDEA.
+2. Clique em **File > Open...**.
+3. Selecione a pasta do projeto (onde está o `pom.xml`) e clique em **OK**.
+4. Aguarde o Maven baixar as dependências.
+5. No painel de projeto, abra o pacote `com.example.catasucata` e localize:
+   - `CatasucataApplication`
+6. Clique com o botão direito na classe → **Run 'CatasucataApplication'**.
+
+A aplicação iniciará na porta padrão:
+
+```text
+http://localhost:8080
+```
+
+### 2. Usando Maven pela linha de comando
+
+Na pasta do projeto:
+
+```bash
+mvn spring-boot:run
+```
+
+---
+
+## 🌐 Endpoints da API
+
+### 🧍‍♂️ Cliente (`/clientes`)
+
+Controller: `ClienteController`
+
+| Método | Endpoint          | Descrição                          |
+|--------|-------------------|------------------------------------|
+| POST   | `/clientes`       | Cadastrar novo cliente            |
+| GET    | `/clientes`       | Listar todos os clientes          |
+| GET    | `/clientes/{id}`  | Buscar cliente por ID             |
+| PUT    | `/clientes/{id}`  | Atualizar dados de um cliente     |
+| DELETE | `/clientes/{id}`  | Remover cliente                   |
+
+📦 **Exemplo de JSON para cadastro de cliente:**
+
+```json
+{
+  "nome": "João da Silva",
+  "email": "joao.silva@example.com",
+  "cpf": "12345678900",
+  "telefone": "11999999999"
+}
+```
+
+> ⚠️ Os campos exatos podem variar conforme sua entidade `Cliente`.
+> Verifique a classe `Cliente` em `src/main/java/com/example/catasucata/model/Cliente.java`.
+
+---
+
+### 📍 Endereço (`/enderecos`)
+
+Controller: `EnderecoController`
+
+| Método | Endpoint                    | Descrição                                  |
+|--------|-----------------------------|--------------------------------------------|
+| POST   | `/enderecos/{clienteId}`    | Cadastrar endereço para um cliente         |
+| GET    | `/enderecos`               | Listar todos os endereços                  |
+| GET    | `/enderecos/{id}`          | Buscar endereço por ID                     |
+
+📦 **Exemplo de JSON para cadastro de endereço:**
+
+```json
+{
+	"rua": "Rua linda",
+	"cidade": "Belo Horizonte",
+	"cep": "30140001"
+}
+```
+
+Requisição:
+
+```http
+POST /enderecos/1
+Content-Type: application/json
+```
+
+---
+
+### 📦 Item (`/itens`)
+
+Controller: `ItemController`
+
+| Método | Endpoint        | Descrição                      |
+|--------|-----------------|--------------------------------|
+| GET    | `/itens`        | Listar todos os itens         |
+| GET    | `/itens/{id}`   | Buscar item por ID            |
+| POST   | `/itens`        | Cadastrar novo item           |
+| PUT    | `/itens/{id}`   | Atualizar item existente      |
+| DELETE | `/itens/{id}`   | Remover item                  |
+
+📦 **Exemplo de JSON para cadastro de item:**
+
+```json
+{
+  "nome": "Sucata de Ferro",
+  "descricao": "Ferro reciclável",
+  "preco": 50.0,
+  "estoque": 100
+}
+```
+
+---
+
+### 🧾 Pedido (`/pedidos`)
+
+Controller: `PedidoController`
+Regra de negócio principal: `PedidoService`
+
+| Método | Endpoint                  | Descrição                                             |
+|--------|---------------------------|-------------------------------------------------------|
+| POST   | `/pedidos/{clienteId}`    | Criar pedido para um cliente com lista de itens      |
+| GET    | `/pedidos`               | Listar todos os pedidos                               |
+| GET    | `/pedidos/{id}`          | Buscar pedido por ID                                  |
+
+📝 **Como criar um pedido**
+
+- Endpoint:
+
+```http
+POST /pedidos/{clienteId}
+Content-Type: application/json
+```
+
+- Corpo da requisição: **lista de itens** (`ItemPedido`), cada um com um `item` (produto) e `quantidade`:
+
+```json
+[
+  {
+    "item": { "id": 1 },
+    "quantidade": 2
+  },
+  {
+    "item": { "id": 3 },
+    "quantidade": 5
+  }
+]
+```
+
+👉 O `PedidoService` faz automaticamente:
+
+- Verificação se o cliente existe.
+- Verificação se cada item existe.
+- Validação de estoque.
+- Desconto da quantidade do estoque.
+- Cálculo do `valorTotal` do pedido.
+- Associação dos `ItemPedido` ao `Pedido`.
+
+📤 **Resposta (exemplo simplificado):**
+
+```json
+{
+  "id": 10,
+  "cliente": {
+    "idCliente": 1,
+    "nome": "João da Silva"
+  },
+  "valorTotal": 350.0,
+  "itens": [
+    {
+      "item": { "id": 1, "nome": "Sucata de Ferro" },
+      "quantidade": 2,
+      "precoUnitario": 50.0
+    },
+    {
+      "item": { "id": 3, "nome": "Alumínio" },
+      "quantidade": 5,
+      "precoUnitario": 50.0
+    }
+  ]
+}
+```
+
+---
+
+## 🔍 Testando com Postman/Insomnia
+
+Ordem sugerida para testar:
+
+1. **Cadastrar Cliente**
+   `POST /clientes` → cria um cliente e anota o `id` retornado.
+2. **Cadastrar Itens**
+   `POST /itens` → cria alguns itens com `estoque` e `preco`.
+3. **Criar Pedido**
+   `POST /pedidos/{clienteId}` → usando o `id` do cliente criado e os `id` dos itens.
+4. **Listar Pedidos**
+   `GET /pedidos` ou `GET /pedidos/{id}` para ver o resultado.
+
+---
+
+## 🧩 Relacionando com os diagramas
+
+- **Diagrama de Classes**
+  Cada classe (`Cliente`, `Endereco`, `Item`, `Pedido`, `ItemPedido`) está mapeada com `@Entity` em `model/`.
+- **Diagrama de Casos de Uso**
+  - "Cadastrar Cliente" → `POST /clientes`
+  - "Listar Clientes" → `GET /clientes`
+  - "Cadastrar Item" → `POST /itens`
+  - "Realizar Pedido" → `POST /pedidos/{clienteId}`
+  - "Consultar Pedido" → `GET /pedidos/{id}`
+
+Você pode usar esses relacionamentos na documentação/relatório do trabalho.
+
+---
+
+## ✅ Observações finais
+
+- Ajuste os exemplos de JSON conforme os atributos exatos das suas entidades.
+- Se mudar o banco ou porta, atualize o `application.properties`.
+- Lembre-se de sempre iniciar o banco de dados antes de subir a aplicação.
+
+---
